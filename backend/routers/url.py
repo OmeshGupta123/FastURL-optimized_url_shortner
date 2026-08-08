@@ -5,7 +5,8 @@ from ..database import get_db, DBDependency
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
-import string, random, datetime
+import string, random
+from datetime import datetime,timezone
 import asyncio
 from fastapi.responses import RedirectResponse
 
@@ -34,7 +35,7 @@ async def create_short_url(request: Request, url: schemas.URLCreate, db: Session
         original_url=url.original_url,
         short_code=short_code,
         user_id=current_user.id,
-        created_at=datetime.datetime.utcnow()
+        created_at=datetime.now(timezone.utc)
     )
     db.add(db_url)
     db.commit()
@@ -47,7 +48,7 @@ async def create_short_url(request: Request, url: schemas.URLCreate, db: Session
 
 # Get all URLs for the current user
 @router.get("/", response_model=list[schemas.URLResponse])
-async def get_urls(request: Request, db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+async def get_urls(db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     if current_user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
     
@@ -76,7 +77,7 @@ async def update_click_count(short_code: str, db: Session):
 
 # Redirect short URL
 @router.get("/r/{short_code}", response_class=RedirectResponse)
-async def redirect_short_url(request: Request, short_code: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def redirect_short_url(short_code: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     # Try cache first
     cache_key = f"short_url:{short_code}"
     cached_url = await asyncio.to_thread(cache.get_cache, cache_key)

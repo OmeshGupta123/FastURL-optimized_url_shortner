@@ -4,6 +4,7 @@ from backend.models import URL, User
 from sqlalchemy.orm import Session
 from sqlalchemy import insert
 import random
+from backend.utils import get_password_hash
 
 fake = Faker()
 
@@ -16,7 +17,7 @@ def seed_database():
             for i in range(5000):
                 users_to_insert.append({
                     "email": fake.unique.email(),
-                    "password": "1234"
+                    "password": get_password_hash("1234")
                 })
             
             db.execute(insert(User), users_to_insert)
