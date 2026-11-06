@@ -213,3 +213,10 @@ alembic/
 alembic.ini
 
 notes.txt
+
+# Node / Frontend
+node_modules/
+.next/
+out/
+.env.local
+.env.*.local
