@@ -1,4 +1,4 @@
-from .. import models, schemas, utils
+from .. import models, schemas, utils, oauth2
 from fastapi import FastAPI, Response, HTTPException, Depends, APIRouter, status, Request
 from ..database import get_db
 from sqlalchemy.orm import Session
@@ -12,10 +12,10 @@ router = APIRouter(
 
 limiter = Limiter(key_func=get_remote_address)
 
-#Create users
+# Create users
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
-@limiter.limit("1500/minute")
-def create_user(request: Request, user:schemas.UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("20/minute")
+def create_user(request: Request, user: schemas.UserCreate, db: Session = Depends(get_db)):
     hashed_password = utils.get_password_hash(user.password)
     
     existing_user = db.query(models.User).filter(user.email == models.User.email).first()
@@ -32,13 +32,18 @@ def create_user(request: Request, user:schemas.UserCreate, db: Session = Depends
     db.refresh(new_user) 
     return new_user
 
-#Get user by id
+# Get user by id (only accessible by the authenticated user)
 @router.get("/{id}", response_model=schemas.UserOut) 
-@limiter.limit("1500/minute")
-def create_user(request: Request, id: int, db: Session = Depends(get_db)):
-    user_query = db.query(models.User).filter(models.User.id == id)
-    find_user = user_query.first()
-    if not find_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"User not found!")
-    return find_user
+@limiter.limit("60/minute")
+def get_user(
+    request: Request, 
+    id: int, 
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    if current_user.id != id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this user"
+        )
+    return current_user
