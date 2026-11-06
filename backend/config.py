@@ -1,28 +1,32 @@
 from pydantic_settings import BaseSettings
-from pydantic import ConfigDict
+from pydantic import ConfigDict, Field
+from typing import Optional
 import os
 
 
 class Settings(BaseSettings):
-    database_hostname: str
-    database_port: str
-    database_password: str
-    database_name: str
-    database_username: str
+    database_url_env: Optional[str] = Field(default=None, validation_alias="DATABASE_URL")
+    database_hostname: str = "localhost"
+    database_port: str = "5432"
+    database_password: str = ""
+    database_name: str = "fasturl_db"
+    database_username: str = "postgres"
     secret_key: str
-    algorithm: str
-    access_token_expire_minutes: int
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
 
+    redis_url: Optional[str] = Field(default=None, validation_alias="REDIS_URL")
     redis_host: str = "localhost"
     redis_port: int = 6379
     redis_password: str = ""
     
-    # Cloud Run specific
+    # Cloud / environment
     environment: str = "development"  # development, production
 
     model_config = ConfigDict(
         env_file=".env",
-        case_sensitive=False
+        case_sensitive=False,
+        extra="ignore"
     )
 
     @property
@@ -31,16 +35,19 @@ class Settings(BaseSettings):
     
     @property
     def database_url(self) -> str:
-        #Get database URL based on environment
-        
+        # If full connection string is provided directly (e.g. Neon, Supabase, Render, Railway)
+        if self.database_url_env:
+            url = self.database_url_env
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql://", 1)
+            return url
+
         if self.database_hostname.startswith("/"):
             # Direct Unix socket path provided
-            db_url = f"postgresql://{self.database_username}:{self.database_password}@/{self.database_name}?host={self.database_hostname}"
-            return db_url
+            return f"postgresql://{self.database_username}:{self.database_password}@/{self.database_name}?host={self.database_hostname}"
         else:
             # Use TCP for local/development
-            db_url = f"postgresql://{self.database_username}:{self.database_password}@{self.database_hostname}:{self.database_port}/{self.database_name}"
-            return db_url
+            return f"postgresql://{self.database_username}:{self.database_password}@{self.database_hostname}:{self.database_port}/{self.database_name}"
 
 
 settings = Settings()

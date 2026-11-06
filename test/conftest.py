@@ -7,21 +7,22 @@ from backend.database import Base, get_db
 from backend.config import settings
 import redis
 
-SQLALCHEMY_DATABASE_URL = (
-    f"postgresql://{settings.database_username}:{settings.database_password}@"
-    f"{settings.database_hostname}:{settings.database_port}/{settings.database_name}"
-)
+SQLALCHEMY_DATABASE_URL = settings.database_url
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Separate Redis database for test isolation
-test_redis = redis.Redis(
-    host=settings.redis_host,
-    port=settings.redis_port,
-    password=settings.redis_password if settings.redis_password else None,
-    db=15,
-    decode_responses=True
+test_redis = (
+    redis.from_url(settings.redis_url, db=15, decode_responses=True)
+    if settings.redis_url
+    else redis.Redis(
+        host=settings.redis_host,
+        port=settings.redis_port,
+        password=settings.redis_password if settings.redis_password else None,
+        db=15,
+        decode_responses=True
+    )
 )
 
 #Before test: create all tables. After tests: drop all. Ensure fresh database schema

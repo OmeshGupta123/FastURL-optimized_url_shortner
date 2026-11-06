@@ -3,15 +3,23 @@ import json
 from typing import Optional
 from backend.config import settings
 
-redis_client = redis.Redis(
-    host=settings.redis_host,
-    port=settings.redis_port,
-    password=settings.redis_password if settings.redis_password else None,
-    db=0,
-    decode_responses=True,
-    socket_connect_timeout=2,
-    socket_timeout=2
-)
+if settings.redis_url:
+    redis_client = redis.from_url(
+        settings.redis_url,
+        decode_responses=True,
+        socket_connect_timeout=2,
+        socket_timeout=2
+    )
+else:
+    redis_client = redis.Redis(
+        host=settings.redis_host,
+        port=settings.redis_port,
+        password=settings.redis_password if settings.redis_password else None,
+        db=0,
+        decode_responses=True,
+        socket_connect_timeout=2,
+        socket_timeout=2
+    )
 
 def get_cache(key: str) -> Optional[dict]:
     try:
