@@ -20,10 +20,10 @@ class User(Base):
 class URL(Base):
     __tablename__="urls"
     id = Column(Integer, primary_key=True, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     original_url = Column(String, nullable=False)
-    short_code = Column(String, nullable=False, unique=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    short_code = Column(String, nullable=False, unique=True, index=True)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
     clicks = Column(Integer, default=0)
 
     user = relationship("User", back_populates="urls")
