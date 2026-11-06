@@ -1,6 +1,7 @@
 {
-  "name": "my-project",
+  "name": "fasturl-frontend",
   "version": "0.1.0",
+  "description": "FastURL Next.js web application",
   "private": true,
   "packageManager": "pnpm@12.3.4",
   "scripts": {
