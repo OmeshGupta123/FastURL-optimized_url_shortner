@@ -13,6 +13,7 @@ python-dotenv>=1.0.0
 # Database & ORM
 SQLAlchemy>=2.0.30
 psycopg2-binary>=2.9.9
+psycopg[binary]>=3.1.0
 alembic>=1.13.0
 
 # Cache & Data Store

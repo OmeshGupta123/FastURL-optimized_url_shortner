@@ -37,9 +37,17 @@ class Settings(BaseSettings):
     def database_url(self) -> str:
         # If full connection string is provided directly (e.g. Neon, Supabase, Render, Railway)
         if self.database_url_env:
-            url = self.database_url_env
+            url = self.database_url_env.strip()
             if url.startswith("postgres://"):
                 url = url.replace("postgres://", "postgresql://", 1)
+
+            # If postgresql+psycopg:// is supplied but psycopg 3 is not installed, fallback to psycopg2
+            if url.startswith("postgresql+psycopg://"):
+                try:
+                    import psycopg  # noqa: F401
+                except ImportError:
+                    url = url.replace("postgresql+psycopg://", "postgresql+psycopg2://", 1)
+
             return url
 
         if self.database_hostname.startswith("/"):
