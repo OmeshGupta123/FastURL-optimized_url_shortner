@@ -32,6 +32,15 @@ def create_user(request: Request, user: schemas.UserCreate, db: Session = Depend
     db.refresh(new_user) 
     return new_user
 
+# Get current user profile
+@router.get("/me", response_model=schemas.UserOut)
+@limiter.limit("60/minute")
+def get_current_user_profile(
+    request: Request,
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    return current_user
+
 # Get user by id (only accessible by the authenticated user)
 @router.get("/{id}", response_model=schemas.UserOut) 
 @limiter.limit("60/minute")

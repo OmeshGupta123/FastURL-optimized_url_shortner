@@ -59,3 +59,26 @@ class TestURLCreation:
         response = client.get("/health")
         assert response.status_code == status.HTTP_200_OK
         assert response.json() == {"status": "healthy"}
+
+    def test_delete_url_success(self, client, auth_headers):
+        create_res = client.post(
+            "/urls",
+            json={"original_url": "https://www.python.org"},
+            headers=auth_headers
+        )
+        assert create_res.status_code == status.HTTP_201_CREATED
+        url_id = create_res.json()["id"]
+
+        del_res = client.delete(f"/urls/{url_id}", headers=auth_headers)
+        assert del_res.status_code == status.HTTP_204_NO_CONTENT
+
+        # Verify it no longer exists
+        list_res = client.get("/urls", headers=auth_headers)
+        assert len(list_res.json()) == 0
+
+    def test_get_current_user_me(self, client, auth_headers):
+        response = client.get("/users/me", headers=auth_headers)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["email"] == "test@example.com"
+        assert "id" in data

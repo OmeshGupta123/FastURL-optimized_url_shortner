@@ -120,3 +120,25 @@ def redirect_short_url(short_code: str, background_tasks: BackgroundTasks, db: S
     background_tasks.add_task(update_click_count, short_code)
     
     return RedirectResponse(url=url.original_url, status_code=307)
+
+# Delete a short URL
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_url(
+    id: int, 
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    url = db.query(models.URL).filter(models.URL.id == id).first()
+    if not url:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="URL not found")
+    if url.user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this URL")
+    
+    # Invalidate Redis caches
+    cache.delete_cache(f"short_url:{url.short_code}")
+    cache.delete_cache(f"clicks:{url.short_code}")
+    cache.invalidate_user_urls_cache(current_user.id)
+    
+    db.delete(url)
+    db.commit()
+    return None
