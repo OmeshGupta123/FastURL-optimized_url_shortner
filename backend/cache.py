@@ -6,7 +6,7 @@ from backend.config import settings
 redis_client = redis.Redis(
     host=settings.redis_host,
     port=settings.redis_port,
-    password=settings.redis_password,
+    password=settings.redis_password if settings.redis_password else None,
     db=0,
     decode_responses=True,
     socket_connect_timeout=2,

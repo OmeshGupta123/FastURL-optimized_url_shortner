@@ -7,16 +7,19 @@ from backend.database import Base, get_db
 from backend.config import settings
 import redis
 
-SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.database_username}:{settings.database_password}@127.0.0.1:{settings.database_port}/test_url_shortener"
+SQLALCHEMY_DATABASE_URL = (
+    f"postgresql://{settings.database_username}:{settings.database_password}@"
+    f"{settings.database_hostname}:{settings.database_port}/{settings.database_name}"
+)
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-#Separate Redis database (use localhost for tests, not 'redis' from docker-compose)
+# Separate Redis database for test isolation
 test_redis = redis.Redis(
-    host='localhost',  # Always use localhost for local tests
+    host=settings.redis_host,
     port=settings.redis_port,
-    password=settings.redis_password,
+    password=settings.redis_password if settings.redis_password else None,
     db=15,
     decode_responses=True
 )

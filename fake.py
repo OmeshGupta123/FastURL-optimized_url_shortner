@@ -17,7 +17,7 @@ def seed_database():
             for i in range(5000):
                 users_to_insert.append({
                     "email": fake.unique.email(),
-                    "password": get_password_hash("1234")
+                    "password": get_password_hash("password123")
                 })
             
             db.execute(insert(User), users_to_insert)

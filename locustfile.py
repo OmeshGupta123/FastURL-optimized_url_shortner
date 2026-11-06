@@ -53,7 +53,7 @@ class load_tester(HttpUser):
             "/login",
             data={
             "username": mail, 
-            "password": "1234"
+            "password": "password123"
             }
         )
         
